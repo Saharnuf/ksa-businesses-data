@@ -9,23 +9,42 @@ export default function Home() {
     if (!file) return;
 
     const reader = new FileReader();
+
     reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const rows = text.split('\n').map((row) => row.split(','));
-      setCsvData(rows);
+      try {
+        const text = e.target?.result as string;
+        const rows = text
+          .split('\n')
+          .map((row) => row.split(',').map(cell => cell.trim()))
+          .filter((row) => row.length > 1 && row.some(cell => cell !== '')); // تجاهل الصفوف الفارغة
+
+        setCsvData(rows);
+      } catch (error) {
+        alert('حدث خطأ أثناء قراءة الملف');
+        console.error(error);
+      }
     };
+
+    reader.onerror = () => {
+      alert('تعذر تحميل الملف. يرجى المحاولة مجددًا.');
+    };
+
     reader.readAsText(file);
+  };
+
+  const handleClear = () => {
+    setCsvData([]);
   };
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
       <h1 className="text-3xl font-bold mb-4">منصة بيانات المنشآت التجارية</h1>
-      <p className="mb-6 text-gray-300">
+      <p className="mb-6 text-gray-700">
         أداة تمكّن من الوصول لمصادر المنشآت التجارية، ورفع البيانات المرفقة، والاطلاع عليها
       </p>
 
       <section className="mt-6 w-full max-w-2xl">
-        <h2 className="text-xl font-semibold mb-2 text-gray-300">المصادر الرسمية لبيانات المنشآت</h2>
+        <h2 className="text-xl font-semibold mb-2 text-gray-800">المصادر الرسمية لبيانات المنشآت</h2>
         <ul className="space-y-2">
           <li>
             <a
@@ -41,32 +60,46 @@ export default function Home() {
 
       <div className="mt-10">
         <label className="block mb-2 font-medium">رفع ملف CSV</label>
-        <input type="file" onChange={handleFileUpload} />
+        <input type="file" accept=".csv" onChange={handleFileUpload} />
       </div>
 
       {csvData.length > 0 && (
-        <table className="mt-8 border-collapse border border-gray-300 w-full max-w-4xl text-sm">
-          <thead>
-            <tr>
-              {csvData[0].map((cell, index) => (
-                <th key={index} className="border border-gray-300 px-2 py-1 bg-gray-100 font-semibold">
-                  {cell}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {csvData.slice(1).map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="border border-gray-300 px-2 py-1">
-                    {cell}
-                  </td>
+        <>
+          <button
+            onClick={handleClear}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            مسح البيانات
+          </button>
+
+          <div className="overflow-x-auto mt-8 w-full max-w-4xl">
+            <table className="border-collapse border border-gray-300 w-full text-sm">
+              <thead>
+                <tr>
+                  {csvData[0].map((cell, index) => (
+                    <th
+                      key={index}
+                      className="border border-gray-300 px-2 py-1 bg-gray-100 font-semibold"
+                    >
+                      {cell}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {csvData.slice(1).map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell, cellIndex) => (
+                      <td key={cellIndex} className="border border-gray-300 px-2 py-1">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </main>
   );
