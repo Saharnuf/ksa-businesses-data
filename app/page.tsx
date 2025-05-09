@@ -41,7 +41,7 @@ export default function Home() {
 
       <div className="mt-10">
         <label className="block mb-2 font-medium">رفع ملف CSV</label>
-        <input type="file" accept=".csv" onChange={handleFileUpload} />
+        <input type="file" onChange={handleFileUpload} />
       </div>
 
       {csvData.length > 0 && (
