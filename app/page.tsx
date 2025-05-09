@@ -3,37 +3,21 @@ import { useState } from 'react';
 
 export default function Home() {
   const [csvData, setCsvData] = useState<string[][]>([]);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-
     reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string;
-        const rows = text
-          .split('\n')
-          .map((row) => row.split(',').map(cell => cell.trim()))
-          .filter((row) => row.length > 1 && row.some(cell => cell !== '')); // تجاهل الصفوف الفارغة
-
-        setCsvData(rows);
-      } catch (error) {
-        alert('حدث خطأ أثناء قراءة الملف');
-        console.error(error);
-      }
+      const text = e.target?.result as string;
+      const rows = text.split('\n').map((row) => row.split(','));
+      setCsvData(rows);
+      setUploadSuccess(true);
     };
-
-    reader.onerror = () => {
-      alert('تعذر تحميل الملف. يرجى المحاولة مجددًا.');
-    };
-
     reader.readAsText(file);
-  };
-
-  const handleClear = () => {
-    setCsvData([]);
   };
 
   return (
@@ -58,48 +42,71 @@ export default function Home() {
         </ul>
       </section>
 
-      <div className="mt-10">
+      <div className="mt-10 w-full max-w-md">
         <label className="block mb-2 font-medium">رفع ملف CSV</label>
-        <input type="file" accept=".csv" onChange={handleFileUpload} />
+        <input type="file" accept=".csv" onChange={handleFileUpload} className="mb-2" />
+
+        {uploadSuccess && (
+          <p className="text-green-600 font-medium">تم رفع الملف بنجاح!</p>
+        )}
+
+        {csvData.length > 0 && (
+          <button
+            onClick={() => {
+              setCsvData([]);
+              setUploadSuccess(false);
+              setSearchQuery('');
+            }}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+          >
+            إزالة الملف وإعادة الرفع
+          </button>
+        )}
+
+        {csvData.length > 0 && (
+          <input
+            type="text"
+            placeholder="ابحث عن منشأة..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="mt-4 w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        )}
       </div>
 
       {csvData.length > 0 && (
-        <>
-          <button
-            onClick={handleClear}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            مسح البيانات
-          </button>
-
-          <div className="overflow-x-auto mt-8 w-full max-w-4xl">
-            <table className="border-collapse border border-gray-300 w-full text-sm">
-              <thead>
-                <tr>
-                  {csvData[0].map((cell, index) => (
-                    <th
-                      key={index}
-                      className="border border-gray-300 px-2 py-1 bg-gray-100 font-semibold"
-                    >
+        <table className="mt-8 border-collapse border border-gray-300 w-full max-w-4xl text-sm">
+          <thead>
+            <tr>
+              {csvData[0].map((cell, index) => (
+                <th
+                  key={index}
+                  className="border border-gray-300 px-2 py-1 bg-gray-100 font-semibold"
+                >
+                  {cell}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {csvData
+              .slice(1)
+              .filter((row) =>
+                row.some((cell) =>
+                  cell.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+              )
+              .map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((cell, cellIndex) => (
+                    <td key={cellIndex} className="border border-gray-300 px-2 py-1">
                       {cell}
-                    </th>
+                    </td>
                   ))}
                 </tr>
-              </thead>
-              <tbody>
-                {csvData.slice(1).map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {row.map((cell, cellIndex) => (
-                      <td key={cellIndex} className="border border-gray-300 px-2 py-1">
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+              ))}
+          </tbody>
+        </table>
       )}
     </main>
   );
