@@ -1,24 +1,10 @@
 'use client';
+
 import { useState } from 'react';
+import FileUpload from '../components/FileUpload'; 
 
 export default function Home() {
   const [csvData, setCsvData] = useState<string[][]>([]);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const rows = text.split('\n').map((row) => row.split(','));
-      setCsvData(rows);
-      setUploadSuccess(true);
-    };
-    reader.readAsText(file);
-  };
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
@@ -42,69 +28,33 @@ export default function Home() {
         </ul>
       </section>
 
+      {/* زر رفع الملف (أنشأنته داخل مكون منفصل) */}
       <div className="mt-10 w-full max-w-md">
-        <label className="block mb-2 font-medium">رفع ملف CSV</label>
-        <input type="file" accept=".csv" onChange={handleFileUpload} className="mb-2" />
-
-        {uploadSuccess && (
-          <p className="text-green-600 font-medium">تم رفع الملف بنجاح!</p>
-        )}
-
-        {csvData.length > 0 && (
-          <button
-            onClick={() => {
-              setCsvData([]);
-              setUploadSuccess(false);
-              setSearchQuery('');
-            }}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-          >
-            إزالة الملف وإعادة الرفع
-          </button>
-        )}
-
-        {csvData.length > 0 && (
-          <input
-            type="text"
-            placeholder="ابحث عن منشأة..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="mt-4 w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        )}
+        <FileUpload onFileUpload={setCsvData} />
       </div>
 
+      {/* جدول عرض البيانات */}
       {csvData.length > 0 && (
         <table className="mt-8 border-collapse border border-gray-300 w-full max-w-4xl text-sm">
           <thead>
             <tr>
               {csvData[0].map((cell, index) => (
-                <th
-                  key={index}
-                  className="border border-gray-300 px-2 py-1 bg-gray-100 font-semibold"
-                >
+                <th key={index} className="border border-gray-300 px-2 py-1 bg-gray-100 font-semibold">
                   {cell}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {csvData
-              .slice(1)
-              .filter((row) =>
-                row.some((cell) =>
-                  cell.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-              )
-              .map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {row.map((cell, cellIndex) => (
-                    <td key={cellIndex} className="border border-gray-300 px-2 py-1">
-                      {cell}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+            {csvData.slice(1).map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((cell, cellIndex) => (
+                  <td key={cellIndex} className="border border-gray-300 px-2 py-1">
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       )}
